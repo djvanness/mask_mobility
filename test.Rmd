@@ -20,9 +20,23 @@ rm(list = ls())
 
 library(tidyverse)
 
-in_file_mobility = read_csv(file = "Mobility_Report_US_county.csv",col_names = TRUE, col_types = NULL)
+in_file_mobility = read_csv(file = "Mobility_Report_US.csv",col_names = TRUE, col_types = NULL)
 in_file_policy = read_csv(file = "USstatesCov19distancingpolicy.csv",col_names = TRUE,col_types = NULL)
 
 ```
 
+## Preliminary exploration to get to know the mobility data
+
+```{r}
+US_mobility = in_file_mobility %>% select(-c(country_region_code,country_region)) %>% filter(is.na(iso_3166_2_code)&is.na(census_fips_code)) %>% mutate(date=mdy(date))#US combined
+
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=retail_and_recreation_percent_change_from_baseline))
+
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=retail_and_recreation_percent_change_from_baseline))
+
+test = princomp(US_mobility[,6:11])
+test2 = predict(test)
+
+
+```
 
