@@ -1,7 +1,7 @@
 ---
 title: "Import Mobility Data"
 author: "David J. Vanness"
-date: "6/23/2020"
+date: "7/16/2020"
 output:
   word_document: default
   html_document: default
@@ -17,8 +17,9 @@ We are importing our data.
 
 ```{r include=FALSE}
 rm(list = ls())
-
+`%notin%` <- Negate(`%in%`)
 library(tidyverse)
+library(lubridate)
 
 in_file_mobility = read_csv(file = "Mobility_Report_US.csv",col_names = TRUE, col_types = NULL)
 in_file_policy = read_csv(file = "USstatesCov19distancingpolicy.csv",col_names = TRUE,col_types = NULL)
@@ -28,15 +29,67 @@ in_file_policy = read_csv(file = "USstatesCov19distancingpolicy.csv",col_names =
 ## Preliminary exploration to get to know the mobility data
 
 ```{r}
+
+
 US_mobility = in_file_mobility %>% select(-c(country_region_code,country_region)) %>% filter(is.na(iso_3166_2_code)&is.na(census_fips_code)) %>% mutate(date=mdy(date))#US combined
 
-ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=retail_and_recreation_percent_change_from_baseline))
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=retail_and_recreation))
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=grocery_and_pharmacy))
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=parks))
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=transit_stations))
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=workplaces))
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=residential))
+```
 
-ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=retail_and_recreation_percent_change_from_baseline))
 
+Principal components analysis
+
+```{r}
 test = princomp(US_mobility[,6:11])
-test2 = predict(test)
+US_mobility = US_mobility %>% mutate(mobility_PC1 = predict(test)[,"Comp.1"], mobility_PC2 = predict(test)[,"Comp.2"],)
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=mobility_PC1))
+ggplot(data = US_mobility) + geom_point(mapping = aes(x=date,y=mobility_PC2))
+
+```
+
+Weekday mobility
+
+```{r}
+
+weekday_US_mobility = US_mobility %>% filter(wday(US_mobility$date) %notin% c(1,7))
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=retail_and_recreation))
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=grocery_and_pharmacy))
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=parks))
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=transit_stations))
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=workplaces))
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=residential))
+
+wd_test = princomp(select(.data = weekday_US_mobility,retail_and_recreation, grocery_and_pharmacy, parks, transit_stations, workplaces, residential))
+
+weekday_US_mobility = weekday_US_mobility %>% mutate(mobility_PC1 = predict(wd_test)[,"Comp.1"], mobility_PC2 = predict(wd_test)[,"Comp.2"],)
+
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=mobility_PC1))
+ggplot(data = weekday_US_mobility) + geom_point(mapping = aes(x=date,y=mobility_PC2))
+
+```
 
 
+Weekend mobility
+
+```{r}
+weekend_US_mobility = US_mobility %>% filter(wday(US_mobility$date) %in% c(1,7))
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=retail_and_recreation))
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=grocery_and_pharmacy))
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=parks))
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=transit_stations))
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=workplaces))
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=residential))
+
+we_test = princomp(select(.data = weekend_US_mobility,retail_and_recreation, grocery_and_pharmacy, parks, transit_stations, workplaces, residential))
+
+weekend_US_mobility = weekend_US_mobility %>% mutate(mobility_PC1 = predict(we_test)[,"Comp.1"], mobility_PC2 = predict(we_test)[,"Comp.2"],)
+
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=mobility_PC1))
+ggplot(data = weekend_US_mobility) + geom_point(mapping = aes(x=date,y=mobility_PC2))
 ```
 
